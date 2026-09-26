@@ -105,7 +105,10 @@ class ExportWorker(QRunnable):
                 inject_jpeg_comment(self.path)
             else:
                 image.save(
-                    self.path, "PNG", pnginfo=pnginfo_with_signature(created_at)
+                    self.path,
+                    "PNG",
+                    pnginfo=pnginfo_with_signature(created_at),
+                    exif=jpeg_exif_bytes(created_at),
                 )
             self.signals.finished.emit(warnings)
         except Exception as exc:

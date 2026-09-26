@@ -18,12 +18,14 @@ class ImageState:
         self.source: Image.Image | None = None
         self.current: Image.Image | None = None
         self.history: deque[Image.Image] = deque(maxlen=HISTORY_LIMIT)
+        self.source_name: str | None = None
 
     def load(self, path: str | Path) -> Image.Image:
         """Load an image from disk, drop alpha, set as source/current."""
         img = Image.open(path).convert("RGB")
         self.source = img.copy()
         self.current = img
+        self.source_name = Path(path).stem
         self.history.clear()
         return img
 
@@ -32,6 +34,7 @@ class ImageState:
         rgb = image.convert("RGB")
         self.source = rgb.copy()
         self.current = rgb
+        self.source_name = None
         self.history.clear()
 
     def push(self, image: Image.Image) -> None:

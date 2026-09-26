@@ -6,7 +6,7 @@ from typing import Any
 
 from PIL import Image
 from PySide6.QtCore import Qt, QThreadPool, QTimer, Signal
-from PySide6.QtGui import QAction, QPixmap
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
 
 from digart.config import DEFAULT_HEIGHT, DEFAULT_WIDTH, PREVIEW_MAX_SIDE
 from digart.engine.image_state import ImageState
+from digart.utils.export import default_export_name
 from digart.engine.pipeline import (
     DATABEND_EFFECTS,
     GLITCH_EFFECTS,
@@ -200,7 +201,13 @@ class MainWindow(QMainWindow):
         preview_layout.addWidget(self.processing_label)
         left_layout.addWidget(preview_group)
 
-        export_btn = QPushButton("Export…")
+        export_btn = QToolButton()
+        export_btn.setText("Export ▾")
+        export_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        export_menu = QMenu(export_btn)
+        export_menu.addAction("PNG", self._export)
+        export_menu.addAction("JPEG", self._export_jpeg)
+        export_btn.setMenu(export_menu)
         export_btn.clicked.connect(self._export)
         left_layout.addWidget(export_btn)
 
@@ -457,23 +464,41 @@ class MainWindow(QMainWindow):
         self._schedule_preview()
 
     def _export(self) -> None:
+        self._run_export_dialog(is_jpeg=False)
+
+    def _export_jpeg(self) -> None:
+        self._run_export_dialog(is_jpeg=True)
+
+    def _run_export_dialog(self, is_jpeg: bool) -> None:
         if not self.state.has_image:
             QMessageBox.warning(self, "Export", "No image to export.")
             return
         if self._export_worker is not None:
             return
 
-        path, selected = QFileDialog.getSaveFileName(
-            self,
-            "Export Image",
-            "",
-            "PNG (*.png);;JPEG (*.jpg *.jpeg)",
-        )
+        ext = ".jpg" if is_jpeg else ".png"
+        default_name = default_export_name(self.state.source_name, self.global_seed, ext)
+        if is_jpeg:
+            title = "Export JPEG"
+            filter_ = "JPEG (*.jpg *.jpeg)"
+        else:
+            title = "Export PNG"
+            filter_ = "PNG (*.png)"
+
+        path, _ = QFileDialog.getSaveFileName(self, title, default_name, filter_)
         if not path:
             return
 
+        p = Path(path)
+        if is_jpeg:
+            if p.suffix.lower() not in (".jpg", ".jpeg"):
+                p = p.with_suffix(".jpg")
+        else:
+            if p.suffix.lower() != ".png":
+                p = p.with_suffix(".png")
+        path = str(p)
+
         quality = 95
-        is_jpeg = selected.lower().startswith("jpeg") or Path(path).suffix.lower() in (".jpg", ".jpeg")
         if is_jpeg:
             quality, ok = QInputDialog.getInt(self, "JPEG Quality", "Quality:", 95, 10, 100, 1)
             if not ok:

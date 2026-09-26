@@ -1,5 +1,7 @@
 """PIL-only helpers for injecting the phabrillust signature into exported images."""
 
+import os
+import tempfile
 from datetime import datetime
 
 from PIL import Image
@@ -7,7 +9,7 @@ from PIL.ExifTags import Base, IFD
 from PIL.PngImagePlugin import PngInfo
 
 SIGNATURE = "this image was created using phabrillust by @anti-matrix"
-_AUTHOR = "@anti-matrix"
+_AUTHOR = "phabrillust"
 _SOFTWARE = "phabrillust"
 _USER_COMMENT_PREFIX = b"ASCII\0\0\0"
 
@@ -28,10 +30,8 @@ def pnginfo_with_signature(created_at: datetime | None = None) -> PngInfo:
     return pnginfo
 
 
-def jpeg_exif_bytes(created_at: datetime | None = None) -> bytes:
-    """Return EXIF bytes (no GPS) for image.save(..., exif=...)."""
-    if created_at is None:
-        created_at = datetime.now()
+def _build_exif(created_at: datetime) -> Image.Exif:
+    """Build a shared EXIF object (no GPS) for JPEG and PNG exports."""
     timestamp = created_at.strftime("%Y:%m:%d %H:%M:%S")
     exif = Image.Exif()
 
@@ -51,7 +51,14 @@ def jpeg_exif_bytes(created_at: datetime | None = None) -> bytes:
         Base.DateTimeDigitized: timestamp,
     }
 
-    return exif.tobytes()
+    return exif
+
+
+def jpeg_exif_bytes(created_at: datetime | None = None) -> bytes:
+    """Return EXIF bytes (no GPS) for image.save(..., exif=...)."""
+    if created_at is None:
+        created_at = datetime.now()
+    return _build_exif(created_at).tobytes()
 
 
 def inject_jpeg_comment(path: str) -> None:
@@ -61,14 +68,23 @@ def inject_jpeg_comment(path: str) -> None:
 
     if data[:2] != b"\xff\xd8":
         raise ValueError(f"Missing JPEG SOI marker at start of {path}")
-    if data.count(b"\xff\xd8") != 1:
-        raise ValueError(f"Unexpected extra SOI marker in {path}")
 
     payload = SIGNATURE.encode("ascii")
     length = 2 + len(payload)
     com_segment = b"\xff\xfe" + length.to_bytes(2, "big") + payload
 
-    with open(path, "wb") as fp:
-        fp.write(data[:2])
-        fp.write(com_segment)
-        fp.write(data[2:])
+    tmp_fd, tmp_path = tempfile.mkstemp(
+        dir=os.path.dirname(path) or ".", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(tmp_fd, "wb") as fp:
+            fp.write(data[:2])
+            fp.write(com_segment)
+            fp.write(data[2:])
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
