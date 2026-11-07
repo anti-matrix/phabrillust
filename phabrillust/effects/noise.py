@@ -6,11 +6,12 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-from digart.effects.base import Effect, ParamDef
+from phabrillust.effects.base import Effect, ParamDef
 
 
 class GaussianNoise(Effect):
     name = "Gaussian Noise"
+    description = "Soft random noise, per channel or monochrome."
     id = "gaussian_noise"
     category = "noise"
     params = [
@@ -32,6 +33,7 @@ class GaussianNoise(Effect):
 
 class SaltPepper(Effect):
     name = "Salt & Pepper"
+    description = "Scatter pure white and black pixels."
     id = "salt_pepper"
     category = "noise"
     params = [
@@ -75,6 +77,7 @@ class SaltPepper(Effect):
 
 class ValueNoise(Effect):
     name = "Value Noise"
+    description = "Blotchy multi-scale cloud noise."
     id = "value_noise"
     category = "noise"
     params = [
@@ -123,6 +126,7 @@ class ValueNoise(Effect):
 
 class FilmGrain(Effect):
     name = "Film Grain"
+    description = "Fine photographic grain with a slight blur."
     id = "film_grain"
     category = "noise"
     params = [

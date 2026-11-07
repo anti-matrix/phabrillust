@@ -1,1 +1,0 @@
-"""digart effects."""

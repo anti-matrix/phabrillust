@@ -5,11 +5,12 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
-from digart.effects.base import Effect, ParamDef
+from phabrillust.effects.base import Effect, ParamDef
 
 
 class ChannelShift(Effect):
     name = "Channel Shift"
+    description = "Offset the red, green and blue channels against each other."
     id = "channel_shift"
     category = "glitch"
     params = [
@@ -43,6 +44,7 @@ class ChannelShift(Effect):
 
 class ScanlineTear(Effect):
     name = "Scanline Tear"
+    description = "Shift random thin horizontal bands sideways."
     id = "scanline_tear"
     category = "glitch"
     params = [
@@ -68,11 +70,12 @@ class ScanlineTear(Effect):
 
 class PixelSort(Effect):
     name = "Pixel Sort"
+    description = "Sort runs of pixels brighter than the threshold."
     id = "pixel_sort"
     category = "glitch"
     params = [
         ParamDef("threshold", "Threshold", "int", 128, 0, 255, 1),
-        ParamDef("angle", "Angle", "choice", "horizontal", choices=["horizontal", "vertical"]),
+        ParamDef("angle", "Direction", "choice", "horizontal", choices=["horizontal", "vertical"]),
         ParamDef("sort_by", "Sort by", "choice", "lightness", choices=["lightness", "hue", "saturation"]),
     ]
 
@@ -123,6 +126,7 @@ class PixelSort(Effect):
 
 class BlockDisplace(Effect):
     name = "Block Displace"
+    description = "Copy or move square blocks to random nearby spots."
     id = "block_displace"
     category = "glitch"
     params = [
@@ -164,6 +168,7 @@ class BlockDisplace(Effect):
 
 class GlitchSlice(Effect):
     name = "Glitch Slice"
+    description = "Cut the image into strips and shift each one."
     id = "glitch_slice"
     category = "glitch"
     params = [

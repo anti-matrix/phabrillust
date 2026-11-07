@@ -33,6 +33,7 @@ class Effect(ABC):
     id: str
     category: str  # glitch, noise, or databend
     params: list[ParamDef]
+    description: str = ""  # one line, shown as a tooltip
 
     @abstractmethod
     def apply(self, image: Image.Image, params: dict[str, Any], rng: np.random.Generator) -> Image.Image:

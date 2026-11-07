@@ -1,5 +1,5 @@
 /*
-  digart dark theme
+  phabrillust dark theme
   tokens:
     background #0a0a0a
     surface    #141414
@@ -130,6 +130,11 @@ QSlider::handle:horizontal:hover {
     background: #e8e8e8;
 }
 
+QSlider::sub-page:horizontal:disabled,
+QSlider::handle:horizontal:disabled {
+    background: #555555;
+}
+
 QSpinBox,
 QDoubleSpinBox,
 QComboBox {
@@ -163,12 +168,9 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: none;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 6px solid #ffffff;
-    width: 0px;
-    height: 0px;
+    image: url(@STYLES@/chevron-down.svg);
+    width: 10px;
+    height: 6px;
 }
 
 QComboBox QAbstractItemView {
@@ -195,6 +197,12 @@ QCheckBox::indicator {
 QCheckBox::indicator:checked {
     background-color: #ffffff;
     border: 1px solid #ffffff;
+    image: url(@STYLES@/check.svg);
+}
+
+QCheckBox::indicator:disabled {
+    border: 1px solid #222222;
+    background-color: #111111;
 }
 
 QCheckBox::indicator:hover {
@@ -203,6 +211,147 @@ QCheckBox::indicator:hover {
 
 QLabel {
     color: #e8e8e8;
+}
+
+/* Labels/checkboxes sit on #141414 group boxes; without this they paint
+   #0a0a0a blocks behind their text. */
+QLabel,
+QCheckBox {
+    background: transparent;
+}
+
+QLabel#param-label {
+    color: #b8b8b8;
+}
+
+QLabel#hint-label {
+    color: #888888;
+    font-size: 9pt;
+}
+
+QLabel#value-label {
+    color: #e8e8e8;
+    font-family: "JetBrains Mono", "Consolas", monospace;
+    font-size: 9pt;
+}
+
+/* Effect panels: the title checkbox is the on/off switch, so make it visible. */
+QGroupBox#effect-panel {
+    background-color: #1a1a1a;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+QGroupBox#effect-panel::title {
+    color: #888888;
+    left: 8px;
+}
+
+QGroupBox#effect-panel:checked::title {
+    color: #ffffff;
+}
+
+QGroupBox::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #555555;
+    border-radius: 3px;
+    background-color: #0a0a0a;
+}
+
+QGroupBox::indicator:hover {
+    border: 1px solid #ffffff;
+}
+
+QGroupBox::indicator:checked {
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+    image: url(@STYLES@/check.svg);
+}
+
+/* Collapsed (off) effect: just the title row, no empty frame. */
+QGroupBox#effect-panel:!checked {
+    border: 1px solid transparent;
+    background-color: transparent;
+}
+
+QWidget#panel-header {
+    background-color: #0a0a0a;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+/* Primary actions (Apply, Export): inverted colors. */
+QPushButton#primary,
+QToolButton#primary {
+    background-color: #ffffff;
+    color: #0a0a0a;
+    border: 1px solid #ffffff;
+    font-weight: bold;
+}
+
+QPushButton#primary:hover,
+QToolButton#primary:hover {
+    background-color: #d8d8d8;
+    border: 1px solid #d8d8d8;
+}
+
+QPushButton#primary:disabled,
+QToolButton#primary:disabled {
+    background-color: #1f1f1f;
+    color: #555555;
+    border: 1px solid #2a2a2a;
+}
+
+QToolButton#primary::menu-button {
+    border-left: 1px solid #0a0a0a;
+    width: 22px;
+}
+
+QToolButton#primary::menu-arrow {
+    image: url(@STYLES@/chevron-down-dark.svg);
+    width: 10px;
+    height: 6px;
+}
+
+/* InstantPopup buttons already say "▾" in their text. */
+QToolButton::menu-indicator {
+    image: none;
+    width: 0px;
+}
+
+QPushButton#small-button,
+QToolButton#tool-button {
+    padding: 5px 8px;
+    font-size: 10pt;
+}
+
+/* Four selection tools share one row of the 280px left panel. */
+QToolButton#tool-button {
+    padding: 5px 4px;
+}
+
+QToolButton#tool-button:checked {
+    background-color: #ffffff;
+    color: #0a0a0a;
+    border: 1px solid #ffffff;
+}
+
+QCheckBox:disabled,
+QLabel:disabled {
+    color: #555555;
+}
+
+QListWidget#history-list {
+    background-color: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    font-family: "JetBrains Mono", "Consolas", monospace;
+    font-size: 9pt;
+    padding: 4px;
+}
+
+QListWidget#history-list::item {
+    padding: 2px 2px;
 }
 
 QLabel#preview-canvas {
@@ -214,10 +363,22 @@ QLabel#preview-canvas {
 }
 
 QLabel#processing-label,
-QLabel#status-warning {
-    color: #ff4444;
+QLabel#status-warning,
+QLabel#status-info {
     font-family: "JetBrains Mono", "Consolas", monospace;
     font-size: 9pt;
+}
+
+QLabel#processing-label {
+    color: #888888;
+}
+
+QLabel#status-warning {
+    color: #ff4444;
+}
+
+QLabel#status-info {
+    color: #e8e8e8;
 }
 
 QStatusBar {
@@ -238,14 +399,14 @@ QScrollArea {
 
 QScrollBar:vertical {
     background: #0a0a0a;
-    width: 12px;
-    border-radius: 6px;
+    width: 6px;
+    border-radius: 3px;
 }
 
 QScrollBar::handle:vertical {
     background: #2a2a2a;
     min-height: 24px;
-    border-radius: 6px;
+    border-radius: 3px;
 }
 
 QScrollBar::handle:vertical:hover {
@@ -259,14 +420,14 @@ QScrollBar::sub-line:vertical {
 
 QScrollBar:horizontal {
     background: #0a0a0a;
-    height: 12px;
-    border-radius: 6px;
+    height: 6px;
+    border-radius: 3px;
 }
 
 QScrollBar::handle:horizontal {
     background: #2a2a2a;
     min-width: 24px;
-    border-radius: 6px;
+    border-radius: 3px;
 }
 
 QScrollBar::handle:horizontal:hover {
@@ -276,6 +437,75 @@ QScrollBar::handle:horizontal:hover {
 QScrollBar::add-line:horizontal,
 QScrollBar::sub-line:horizontal {
     width: 0px;
+}
+
+/* Edit | Verify tabs */
+QTabWidget#main-tabs::pane {
+    border: none;
+    border-top: 1px solid #2a2a2a;
+}
+
+QTabWidget#main-tabs QTabBar {
+    qproperty-drawBase: 0;
+}
+
+QTabWidget#main-tabs QTabBar::tab {
+    background: transparent;
+    color: #888888;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 18px;
+    font-weight: bold;
+    font-size: 10pt;
+}
+
+QTabWidget#main-tabs QTabBar::tab:hover {
+    color: #e8e8e8;
+}
+
+QTabWidget#main-tabs QTabBar::tab:selected {
+    color: #ffffff;
+    border-bottom: 2px solid #ffffff;
+}
+
+/* Verify tab */
+QScrollArea#verify-side {
+    border-left: 1px solid #2a2a2a;
+}
+
+QLabel#verdict-yes,
+QLabel#verdict-partial,
+QLabel#verdict-no,
+QLabel#verdict-error {
+    font-size: 15pt;
+    font-weight: bold;
+}
+
+QLabel#verdict-yes {
+    color: #ffffff;
+}
+
+QLabel#verdict-partial {
+    color: #b8b8b8;
+}
+
+QLabel#verdict-no {
+    color: #888888;
+}
+
+QLabel#verdict-error {
+    color: #ff4444;
+}
+
+QProgressBar {
+    background-color: #2a2a2a;
+    border: none;
+    border-radius: 3px;
+}
+
+QProgressBar::chunk {
+    background-color: #ffffff;
+    border-radius: 3px;
 }
 
 QFrame#panel-separator {

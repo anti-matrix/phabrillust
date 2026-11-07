@@ -153,3 +153,6 @@ desktop.ini
 # Keep bundled fonts tracked
 !assets/fonts/*.ttf
 !assets/fonts/*.txt
+
+# Claude Code project notes (local only)
+.claude/

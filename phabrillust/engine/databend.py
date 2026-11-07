@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
-from digart.effects.base import Effect, ParamDef
+from phabrillust.effects.base import Effect, ParamDef
 
 PNG_SIG = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
 JPEG_SOI = bytes([0xFF, 0xD8])
@@ -267,6 +267,7 @@ class _BaseDatabend(Effect):
 
 class DatabendBitflip(_BaseDatabend):
     name = "Databend Bitflip"
+    description = "Flip random bits in the image's PNG bytes."
     id = "databend_bitflip"
     params = [
         ParamDef("intensity", "Intensity", "float", 0.005, 0.0, 0.1, 0.001),
@@ -282,6 +283,7 @@ class DatabendBitflip(_BaseDatabend):
 
 class DatabendDrop(_BaseDatabend):
     name = "Databend Drop"
+    description = "Delete random bytes from the PNG data (smears and shifts)."
     id = "databend_drop"
     params = [
         ParamDef("intensity", "Intensity", "float", 0.002, 0.0, 0.05, 0.001),
@@ -297,6 +299,7 @@ class DatabendDrop(_BaseDatabend):
 
 class DatabendDuplicate(_BaseDatabend):
     name = "Databend Duplicate"
+    description = "Repeat random bytes in the PNG data."
     id = "databend_duplicate"
     params = [
         ParamDef("intensity", "Intensity", "float", 0.002, 0.0, 0.05, 0.001),
@@ -312,6 +315,7 @@ class DatabendDuplicate(_BaseDatabend):
 
 class DatabendShuffle(_BaseDatabend):
     name = "Databend Shuffle"
+    description = "Swap chunks of the PNG data around."
     id = "databend_shuffle"
     params = [
         ParamDef("chunk_size", "Chunk size", "int", 16, 2, 256, 1),
@@ -334,6 +338,7 @@ class DatabendShuffle(_BaseDatabend):
 
 class DatabendPngIdat(_BaseDatabend):
     name = "Databend PNG IDAT"
+    description = "Corrupt only the compressed pixel data of the PNG."
     id = "databend_png_idat"
     params = [
         ParamDef("intensity", "Intensity", "float", 0.005, 0.0, 0.05, 0.001),
@@ -348,6 +353,7 @@ class DatabendPngIdat(_BaseDatabend):
 
 class DatabendJpegBody(_BaseDatabend):
     name = "Databend JPEG Body"
+    description = "Encode as JPEG, then corrupt the compressed body (blocky color bursts)."
     id = "databend_jpeg_body"
     params = [
         ParamDef("intensity", "Intensity", "float", 0.005, 0.0, 0.05, 0.001),

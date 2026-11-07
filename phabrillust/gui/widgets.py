@@ -2,12 +2,12 @@
 
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtWidgets import (
+    QAbstractSpinBox,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
-    QFrame,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -18,7 +18,34 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from digart.effects.base import Effect, ParamDef
+from phabrillust.effects.base import Effect, ParamDef
+
+_SPIN_WIDTH = 72
+
+
+class _WheelGuard(QObject):
+    """Ignore wheel events on unfocused controls so scrolling the panel
+    doesn't silently change slider/spin/combo values."""
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.Wheel and isinstance(obj, QWidget) and not obj.hasFocus():
+            event.ignore()
+            return True
+        return False
+
+
+_wheel_guard = _WheelGuard()
+
+
+def guard_wheel(*widgets: QWidget) -> None:
+    for w in widgets:
+        w.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        w.installEventFilter(_wheel_guard)
+
+
+def _decimals_for(step: float) -> int:
+    text = f"{step:.6f}".rstrip("0")
+    return max(1, len(text.split(".")[1])) if "." in text else 1
 
 
 class ParamWidget(QWidget):
@@ -57,6 +84,9 @@ class IntParamWidget(ParamWidget):
         self.spin.setMinimum(int(self.param.min))
         self.spin.setMaximum(int(self.param.max))
         self.spin.setSingleStep(int(self.param.step or 1))
+        self.spin.setFixedWidth(_SPIN_WIDTH)
+        self.spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        guard_wheel(self.slider, self.spin)
 
         self.slider.valueChanged.connect(self.spin.setValue)
         self.spin.valueChanged.connect(self.slider.setValue)
@@ -82,8 +112,12 @@ class FloatParamWidget(ParamWidget):
         self.spin = QDoubleSpinBox()
         self.spin.setMinimum(float(self.param.min))
         self.spin.setMaximum(float(self.param.max))
-        self.spin.setSingleStep(float(self.param.step or 0.1))
-        self.spin.setDecimals(3)
+        step = float(self.param.step or 0.1)
+        self.spin.setSingleStep(step)
+        self.spin.setDecimals(_decimals_for(step))
+        self.spin.setFixedWidth(_SPIN_WIDTH)
+        self.spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        guard_wheel(self.slider, self.spin)
 
         self.slider.valueChanged.connect(self._slider_to_spin)
         self.spin.valueChanged.connect(self._spin_to_slider)
@@ -115,12 +149,14 @@ class FloatParamWidget(ParamWidget):
 
 
 class BoolParamWidget(ParamWidget):
+    # The row label comes from EffectPanel's grid; the checkbox itself is unlabeled.
     def _build_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.checkbox = QCheckBox(self.param.label)
+        self.checkbox = QCheckBox()
         self.checkbox.stateChanged.connect(self._emit)
         layout.addWidget(self.checkbox)
+        layout.addStretch(1)
 
     def get_value(self) -> bool:
         return self.checkbox.isChecked()
@@ -130,13 +166,14 @@ class BoolParamWidget(ParamWidget):
 
 
 class ChoiceParamWidget(ParamWidget):
+    # The row label comes from EffectPanel's grid; the combo itself is unlabeled.
     def _build_ui(self) -> None:
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.combo = QComboBox()
         self.combo.addItems(list(self.param.choices))
         self.combo.currentTextChanged.connect(lambda _: self._emit())
-        layout.addWidget(QLabel(self.param.label))
+        guard_wheel(self.combo)
         layout.addWidget(self.combo, 1)
 
     def get_value(self) -> str:
@@ -161,7 +198,8 @@ def _build_param_widget(param: ParamDef) -> ParamWidget:
 
 
 class EffectPanel(QGroupBox):
-    """Collapsible panel for one effect: enable checkbox + parameter widgets."""
+    """Panel for one effect: the title checkbox enables it; parameters are
+    shown only while it is enabled, keeping the effect list short."""
 
     configuration_changed = Signal()
 
@@ -172,30 +210,35 @@ class EffectPanel(QGroupBox):
         self._build_ui()
 
     def _build_ui(self) -> None:
-        self.setTitle(self.effect.name.upper())
+        self.setTitle(self.effect.name.upper().replace("&", "&&"))  # "&" is a mnemonic marker
+        self.setObjectName("effect-panel")
         self.setCheckable(True)
         self.setChecked(False)
+        if self.effect.description:
+            self.setToolTip(self.effect.description)
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(8)
-        layout.setContentsMargins(10, 20, 10, 10)
+        layout.setSpacing(0)
+        layout.setContentsMargins(10, 14, 10, 6)
 
-        grid = QGridLayout()
+        self._body = QWidget()
+        grid = QGridLayout(self._body)
+        grid.setContentsMargins(0, 6, 0, 4)
+        grid.setHorizontalSpacing(10)
+        grid.setVerticalSpacing(8)
         grid.setColumnStretch(1, 1)
         for row, param in enumerate(self.effect.params):
             label = QLabel(param.label)
+            label.setObjectName("param-label")
             widget = _build_param_widget(param)
             widget.value_changed.connect(self.configuration_changed)
             self._param_widgets[param.name] = widget
             grid.addWidget(label, row, 0)
             grid.addWidget(widget, row, 1)
+        layout.addWidget(self._body)
+        self._body.setVisible(False)
 
-        layout.addLayout(grid)
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setObjectName("panel-separator")
-        layout.addWidget(line)
-
+        self.toggled.connect(self._body.setVisible)
         self.toggled.connect(self.configuration_changed)
 
     def is_enabled(self) -> bool:
